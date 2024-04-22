@@ -1,0 +1,66 @@
+﻿@page "/login"
+
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject AppDbContext appDbContext;
+@inject NavigationManager navmanager
+<div class="row">
+    <div class="col-lg-4 offset-lg-4 pt-4 pb-4 border">
+        <Microsoft.AspNetCore.Components.Forms.EditForm Model="@viewmodel" OnValidSubmit="Authenticate" FormName="LoginForm">
+            <Microsoft.AspNetCore.Components.Forms.DataAnnotationsValidator></Microsoft.AspNetCore.Components.Forms.DataAnnotationsValidator>
+            <div class="mb-3 text-center flex-column">
+                <h3>Login</h3>
+            </div>
+            <div class="mb-3">
+                <label>E-Mail</label>
+                <Microsoft.AspNetCore.Components.Forms.InputText @bind-bind-Value="viewmodel.email" class="form-control" placeholder="E-Mail">
+                <Microsoft.AspNetCore.Components.Forms.ValidationMessage For="() => viewmodel.email"></Microsoft.AspNetCore.Components.Forms.ValidationMessage>
+                </Microsoft.AspNetCore.Components.Forms.InputText>
+            </div>
+            <div class="mb-3">
+                <label>Password</label>
+                <Microsoft.AspNetCore.Components.Forms.InputText @bind-bind-Value="viewmodel.pw" class="form-control" placeholder="Password" type="password">
+                    <Microsoft.AspNetCore.Components.Forms.ValidationMessage For="() => viewmodel.pw"></Microsoft.AspNetCore.Components.Forms.ValidationMessage>
+                </Microsoft.AspNetCore.Components.Forms.InputText>
+            </div>
+            <div class="mb-3 text-center">
+                <span class="text-danger">@errors</span>
+            </div>
+            <div class="mb-3 d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+        </Microsoft.AspNetCore.Components.Forms.EditForm>
+
+    </div>
+
+</div>
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+    [SupplyParameterFromForm]
+    public LoginViewModel viewmodel { get; set; } = new();
+
+    private string errors { get; set; } = "";
+    private async Task Authenticate()
+    {
+        var user = appDbContext.Users.Where(u => u.email == viewmodel.email).FirstOrDefault();
+        if (user == null || user.password != viewmodel.pw)
+        {
+            errors = "Invalid E-Mail or Password. Please check your credentials!";
+            return;
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Email,user.email),
+            new Claim(ClaimTypes.Name,user.nickname)
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync(principal);
+        navmanager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,33 @@
+﻿@page "/counter"
+@rendermode InteractiveServer
+
+<PageTitle>Counter</PageTitle>
+
+<div class="col-12">
+    <div class="card">
+        <div class="card-body">
+            <AuthorizeView>
+                <NotAuthorized>
+                    <span>You are not logged in. Please <a class="fw-bolder" href="/login"> click here</a> to log in.</span>
+                </NotAuthorized>
+                <Authorized>
+                    <h1>Counter</h1>
+
+                    <p role="status">Current count: @currentCount</p>
+
+                    <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

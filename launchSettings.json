@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "userapi": "StartDebugging",
+        "webcrawl_if20b032": "StartDebugging"
+      }
+    }
+  }
+}

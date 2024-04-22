@@ -1,0 +1,29 @@
+version: '3.4'
+
+services:
+
+  webcrawl_if20b032:
+    image: ${DOCKER_REGISTRY-}webcrawlif20b032
+    build:
+      context: .
+      dockerfile: Webcrawl_if20b032/Dockerfile
+    depends_on:
+        - db
+    volumes:
+        - crawlfiles:/app/files
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crawl1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+networks:
+    crawlnetwork:
+volumes:
+  postgres-db:
+  crawlfiles:
+

@@ -1,0 +1,28 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="fw-bolder">Welcome!</h2>
+    </div>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <span>You are not logged in. Please <a class="fw-bolder" href="/login"> click here</a> to log in.</span>
+                        <span><a href="/register">Register?</a></span>
+                        <span><a href="/forgot">Forgot Password?</a></span>
+                    </NotAuthorized>
+                    <Authorized>
+                        <span>Welcome <b>@context.User.Identity.Name</b>! <a class="fw-bolder" href="/logout">Logout</a></span>
+
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </div>
+
+</div>
+
