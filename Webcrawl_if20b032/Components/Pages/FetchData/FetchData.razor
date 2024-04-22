@@ -88,7 +88,7 @@
         await Task.Delay(500);
         errors = viewmodel.url;
         await Task.Delay(500);
-        errors = "Sending request...";
+        errors = "";
         int depth;
         fetchingData = true;
         if (!String.IsNullOrWhiteSpace(viewmodel.url + viewmodel.depth))
@@ -212,7 +212,7 @@
 
     public static async Task DownloadFiles(List<string> pdfUrls, string user)
     {
-        Directory.CreateDirectory("/app/files" + user);
+        Directory.CreateDirectory("/app/files/" + user);
         try
         {
             foreach (string s in pdfUrls)
