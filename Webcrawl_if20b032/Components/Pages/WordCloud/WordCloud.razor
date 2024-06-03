@@ -1,0 +1,109 @@
+﻿@page "/wordcloud"
+@using Webcrawl_if20b032.Components.Controllers
+@using WordCloudSharp;
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Logging
+@using System.Text.RegularExpressions
+@using System.Net
+@using Microsoft.JSInterop
+@using System.Text
+@using Webcrawl_if20b032.Components.Services
+@using Webcrawl_if20b032.Controllers
+@using Webcrawl_if20b032.Domain.Files
+@using Webcrawl_if20b032.Domain.Users
+@using iText.Kernel.Pdf.Canvas.Parser
+@using userapi.Domain
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using iText.Kernel.Pdf;
+@using System.Linq;
+@using Syncfusion.Blazor.Buttons;
+@using WordCloudSharp;
+@inject IJSRuntime JS
+
+@inject HttpClient httpClient
+@inject AppDbContext dbcontext
+@attribute [StreamRendering]
+
+
+<AuthorizeView>
+    <NotAuthorized>
+        <span>You are not logged in. Please <a class="fw-bolder" href="/login"> click here</a> to log in.</span>
+    </NotAuthorized>
+    <Authorized>
+        <EditForm Model="@viewmodel" OnValidSubmit="CreateWC" FormName="WordCloudCreation" Context="WCCreation">
+            <Microsoft.AspNetCore.Components.Forms.DataAnnotationsValidator></Microsoft.AspNetCore.Components.Forms.DataAnnotationsValidator>
+            @foreach (var item in viewmodel.checkboxes)
+            {
+                    <label class="form-check-label">@item.name</label>
+                    <InputCheckbox @bind-Value="item.isChecked" class="form-control">
+                    </InputCheckbox>
+            }
+            <div class="mb-3 d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Search</button><br />
+            </div>
+        </EditForm>
+        @if (test)
+        {
+            <div><span>Working</span></div>
+        }
+
+    </Authorized>
+</AuthorizeView>
+
+
+
+
+@code {
+    [CascadingParameter]
+    public HttpContext? httpContext { get; set; }
+    [SupplyParameterFromForm]
+    private wordCloudModel viewmodel { get; set; } = new();
+
+    public static bool test = false;
+    public static string user = "";
+    public static string errors { get; set; } = "";
+    private static List<UserHistory> _userHistory { get; set; } = new List<UserHistory>();
+    private static List<string> filenames { get; set; } = new();
+    private static List<FileModel> userFiles { get; set; } = new();
+    private static bool hasFiles { get; set; } = false;
+    private static List<(FileModel file, bool isChecked)> checkedFiles { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1);
+        user = (httpContext.User.Claims.FirstOrDefault(s => true).ToString().Split("emailaddress:")[1].Trim());
+        if (!Directory.Exists("/app/wwwroot/files/wordcloud/" + user))
+        {
+            Directory.CreateDirectory("/app/wwwroot/files/wordcloud/" + user);
+            return;
+        }
+        string pdf_path = "/app/wwwroot/files/" + user;
+        string wc_path = "/app/wwwroot/files/wordcloud/" + user;
+        string[] filepaths = Directory.GetFiles(pdf_path);
+        foreach (string s in filepaths)
+        {
+            string[] singlefilepath = new string[1] { s };
+            filenames.Add(Path.GetFileName(s));
+            var res = await ParsePDF.GetTopWordsFromPdfFiles(singlefilepath);
+            var fm = new FileModel(s, Path.GetFileName(s), res);
+            userFiles.Add(fm);
+        }
+        hasFiles = true;
+        var cb_list = new List<CheckboxOption>();
+        foreach (var s in userFiles)
+        {
+            checkedFiles.Add((s, false));
+            var cb = new CheckboxOption() { name = s.FileName, isChecked = false };
+            cb_list.Add(cb);
+        }
+        viewmodel.checkboxes = cb_list;
+    }
+    private async void CreateWC()
+    {
+        var res = viewmodel.checkboxes;
+        var res2 = res.Where(s => s.isChecked == true).ToList();
+        if (res2.Count > 0)
+            test = true;
+    }
+}

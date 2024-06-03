@@ -1,6 +1,8 @@
 ﻿@page "/stats"
 @using Microsoft.Extensions.Logging
 @using System.Text.RegularExpressions
+@using System.Net
+@using Webcrawl_if20b032.Components.Controllers
 @using Webcrawl_if20b032.Components.Services
 @using Webcrawl_if20b032.Controllers
 @using Webcrawl_if20b032.Domain.Files
@@ -13,6 +15,7 @@
 @using iText.Kernel.Pdf;
 @using System.Linq;
 @using Syncfusion.Blazor.Buttons;
+@inject IJSRuntime JS
 
 @inject HttpClient httpClient
 @inject AppDbContext dbcontext
@@ -96,10 +99,10 @@
                         {
                             <tr>
                                 <td>
-                                    <i class="bi bi-file-pdf"></i>
+                                    <p>@File.GetLastWriteTime(file.Filepath).ToLocalTime()</p>
                                 </td>
                                 <td>@file.FileName</td>
-                                <td><a href="@file.Filepath">@file.Filepath</a></td>
+                                <td><a href="@file.Filepath.Substring(13,file.Filepath.Length-13)">@file.Filepath</a></td>
                                 <td>
                                     <p>
                                         @foreach (var kvp in file.commonwords)
@@ -142,6 +145,7 @@
     private static List<FileModel> userFiles { get; set; } = new();
     private static List<FileModel> filteredFiles { get; set; } = new();
     private static bool loading = false;
+
 
     private async Task FilterFiles()
     {
@@ -190,17 +194,17 @@
         filteredFiles.RemoveAll(s => true);
         userFiles.RemoveAll(s => true);
         string user = (httpContext.User.Claims.FirstOrDefault(s => true).ToString().Split("emailaddress:")[1].Trim());
-        if (!Directory.Exists("/app/files/" + user))
+        if (!Directory.Exists("/app/wwwroot/files/" + user))
         {
-            Directory.CreateDirectory("/app/files/" + user);
+            Directory.CreateDirectory("/app/wwwroot/files/" + user);
         }
-        string path = "/app/files/" + user;
+        string path = "/app/wwwroot/files/" + user;
         string[] filepaths = Directory.GetFiles(path);
         foreach (string s in filepaths)
         {
             string[] singlefilepath = new string[1] { s };
             filenames.Add(Path.GetFileName(s));
-            var res = await GetTopWordsFromPdfFiles(singlefilepath);
+            var res = await ParsePDF.GetTopWordsFromPdfFiles(singlefilepath);
 
             userFiles.Add(new FileModel(s, Path.GetFileName(s), res));
         }
@@ -209,79 +213,5 @@
         loading = false;
 
     }
-    public static async Task<Dictionary<string, int>> GetTopWordsFromPdfFiles(string[] pdfFilePaths)
-    {
-
-        var wordCount = new Dictionary<string, int>();
-
-        foreach (var pdfFilePath in pdfFilePaths)
-        {
-            // Extract text from PDF
-            string text = await ExtractTextFromPdf(pdfFilePath);
-
-            // Tokenize text into words
-            string[] words = await TokenizeText(text);
-
-            // Count word frequency
-            await CountWordFrequency(words, wordCount);
-        }
-
-        // Sort by frequency and take the top 10
-        var topWords = wordCount.OrderByDescending(pair => pair.Value)
-                                .Take(10)
-                                .ToDictionary(pair => pair.Key, pair => pair.Value);
-
-        return topWords;
-    }
-
-    private static async Task<string> ExtractTextFromPdf(string pdfFilePath)
-    {
-        await Task.Delay(1);
-        using (PdfReader reader = new PdfReader(pdfFilePath))
-        {
-            using (PdfDocument pdf = new PdfDocument(reader))
-            {
-                string text = "";
-
-                for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
-                {
-                    text += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
-                }
-
-                return text;
-            }
-        }
-    }
-
-    private static async Task<string[]> TokenizeText(string text)
-    {
-        // Simple tokenization by splitting on whitespace
-        await Task.Delay(1);
-        return text.Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-    }
-
-    private static async Task CountWordFrequency(string[] words, Dictionary<string, int> wordCount)
-    {
-        await Task.Delay(1);
-        foreach (var word in words)
-        {
-            if (word.Length > 4)
-            {
-                string cleanedWord = word.ToLower().Trim();
-
-                if (!string.IsNullOrWhiteSpace(cleanedWord))
-                {
-                    if (wordCount.ContainsKey(cleanedWord))
-                    {
-                        wordCount[cleanedWord]++;
-                    }
-                    else
-                    {
-                        wordCount[cleanedWord] = 1;
-                    }
-                }
-            }
-
-        }
-    }
+    
 }

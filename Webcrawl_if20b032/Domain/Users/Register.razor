@@ -47,7 +47,7 @@
 </div>
 @code {
     [CascadingParameter]
-    public HttpContext? HttpContext { get; set; }
+    public HttpContext? httpContext { get; set; }
     [SupplyParameterFromForm]
     public RegisterViewModel viewmodel { get; set; } = new();
 
@@ -61,6 +61,12 @@
             mail = viewmodel.email;
             pw = viewmodel.pw;
             nick = viewmodel.nickname;
+
+            if (String.IsNullOrEmpty(mail) || String.IsNullOrEmpty(pw) || String.IsNullOrEmpty(nick))
+            {
+                errors = "Please enter a value in every field!";
+                return;
+            }
             var newuser = new User(mail, pw, nick);
             context.Users.Add(newuser);
             context.SaveChanges();
@@ -72,8 +78,13 @@
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
-            await HttpContext.SignInAsync(principal);
+            await httpContext.SignInAsync(principal);
             navmanager.NavigateTo("/");
+        }
+        else
+        {
+            errors = "E-Mail is already in use! Please choose a different E-Mail Address";
+            return;
         }
     }
 }

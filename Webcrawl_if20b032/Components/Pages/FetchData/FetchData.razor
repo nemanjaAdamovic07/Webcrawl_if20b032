@@ -212,7 +212,7 @@
 
     public static async Task DownloadFiles(List<string> pdfUrls, string user)
     {
-        Directory.CreateDirectory("/app/files/" + user);
+        Directory.CreateDirectory("/app/wwwroot/files/" + user);
         try
         {
             foreach (string s in pdfUrls)
@@ -222,7 +222,7 @@
                 response.EnsureSuccessStatusCode();
 
                 string fileName = Path.GetFileName(s);
-                string filePath = Path.Combine("/app/files/" + user, fileName);
+                string filePath = Path.Combine("/app/wwwroot/files/" + user, fileName);
 
                 using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {

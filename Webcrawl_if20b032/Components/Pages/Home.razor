@@ -16,8 +16,11 @@
                         <span><a href="/forgot">Forgot Password?</a></span>
                     </NotAuthorized>
                     <Authorized>
-                        <span>Welcome <b>@context.User.Identity.Name</b>! <a class="fw-bolder" href="/logout">Logout</a></span>
-
+                        <span>Welcome <b>@context.User.Identity.Name</b>! <br />
+                        
+                        <a class="fw-bolder" href="/update">Edit Info</a>
+                        <a class="fw-bolder" href="/logout">Logout</a></span>
+                        
                     </Authorized>
                 </AuthorizeView>
             </div>

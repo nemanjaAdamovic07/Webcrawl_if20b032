@@ -1,0 +1,86 @@
+﻿@page "/history"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Logging
+@using System.Text.RegularExpressions
+@using System.Net
+@using Microsoft.JSInterop
+@using System.Text
+@using Webcrawl_if20b032.Components.Services
+@using Webcrawl_if20b032.Controllers
+@using Webcrawl_if20b032.Domain.Files
+@using Webcrawl_if20b032.Domain.Users
+@using iText.Kernel.Pdf.Canvas.Parser
+@using userapi.Domain
+@using System;
+@using System.Collections.Generic;
+@using System.IO;
+@using iText.Kernel.Pdf;
+@using System.Linq;
+@using Syncfusion.Blazor.Buttons;
+@inject IJSRuntime JS
+
+@inject HttpClient httpClient
+@inject AppDbContext dbcontext
+@attribute [StreamRendering]
+
+
+<AuthorizeView>
+    <NotAuthorized>
+        <span>You are not logged in. Please <a class="fw-bolder" href="/login"> click here</a> to log in.</span>
+    </NotAuthorized>
+    <Authorized>
+        <h3>History</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Link</th>
+                    <th>Searched URLs</th>
+                    <th>Found PDFs</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var h in _userHistory)
+                {
+                    <tr>
+                        <td>@h.time</td>
+                        <td>@h.url</td>
+                        <td>
+                            @foreach (var s in h.searchedurls)
+                            {
+                                @s <br />
+                            }
+                        </td>
+                        <td>
+                            @foreach (var s in h.foundpdfs)
+                            {
+                                @s <br />
+                            }
+                        </td>
+                    </tr>
+                }
+
+
+            </tbody>
+        </table>
+    </Authorized>
+</AuthorizeView>
+
+
+
+
+@code {
+    [CascadingParameter]
+    public HttpContext? httpContext { get; set; }
+    public static string user = "";
+    private static List<UserHistory> _userHistory { get; set; } = new List<UserHistory>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1);
+        user = (httpContext.User.Claims.FirstOrDefault(s => true).ToString().Split("emailaddress:")[1].Trim());
+        _userHistory = dbcontext.UserHistory.Where(h => h.email == user).ToList();
+    }
+
+}
